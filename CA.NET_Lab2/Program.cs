@@ -68,14 +68,14 @@ namespace CA.NET_Lab2
         }
         static void changeWatcher_Deleted(object sender, FileSystemEventArgs e)
         {
-            if (new FileInfo(e.FullPath).Extension != ".gz" & e.FullPath.IndexOf(SourceDirectory) != -1)
+            if (!(new FileInfo(e.FullPath).Extension == ".gz" & e.FullPath.IndexOf(SourceDirectory)!=-1))
             {
                 Console.WriteLine("File|> {0} deleted at time: {1}", e.FullPath, DateTime.Now.ToLocalTime());
-            }
+            }   
         }
         static void changeWatcher_Created(object sender, FileSystemEventArgs e)
         {
-            if (new FileInfo(e.FullPath).Extension != ".gz" & e.FullPath.IndexOf(SourceDirectory) != -1)
+            if (!(new FileInfo(e.FullPath).Extension == ".gz" & e.FullPath.IndexOf(SourceDirectory) != -1))
             {
                 Console.WriteLine("File|> {0} created at time: {1} {2}", e.FullPath, DateTime.Now.ToLocalTime(), DateTime.Now.Month);
             }
