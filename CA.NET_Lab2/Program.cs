@@ -5,7 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.IO.Compression;
 using System.Text;
-
+using System.Security.Cryptography;
 
 namespace CA.NET_Lab2
 {
@@ -22,18 +22,18 @@ namespace CA.NET_Lab2
 
             //DirectoryInfo DirGen = new DirectoryInfo(path + "12\\");
             //FileSystemWatcher watcher = new FileSystemWatcher(path);
-
             using (FileSystemWatcher changeWatcher = new FileSystemWatcher(SourceDirectory))
             {
-                List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
-                watchers.Add(changeWatcher);
-                watchers.Add(new FileSystemWatcher(TargetDirectory));
+                List<FileSystemWatcher> watchers = new List<FileSystemWatcher>
+                {
+                    changeWatcher,
+                    new FileSystemWatcher(TargetDirectory)
+                };
                 //FileInfo selectFile = new FileInfo(e.FullPath)
                 watchers[0].EnableRaisingEvents = true;
                 watchers[0].IncludeSubdirectories = true;
                 watchers[1].EnableRaisingEvents = true;
                 watchers[1].IncludeSubdirectories = true;
-
 
                 watchers[0].Changed += changeWatcher_Changed;
                 watchers[0].Created += changeWatcher_Created;
@@ -90,10 +90,13 @@ namespace CA.NET_Lab2
         {
             try
             {
-                if ((currentArchive = new FileInfo(eFPath)).Extension == ".txt" && eFPath.IndexOf(SourceDirectory) != -1)
+                if ((currentFile = new FileInfo(eFPath)).Extension == ".txt" && eFPath.IndexOf(SourceDirectory) != -1)
                 {
-                    currentArchive = Compress(currentArchive);
-                    if (currentArchive.Extension == ".gz")
+                    if (currentFile.FullName.IndexOf("_AES.txt") == -1) //&& currentFile.FullName.IndexOf("_AES.gz") == -1)
+                    currentFile = Encryption(currentFile);
+
+                    currentArchive = Compress(currentFile);
+                    if (currentArchive.FullName.IndexOf("_AES.gz") != -1)
                     {
                         int ifSpace = currentArchive.Name.IndexOf("_") + 1;
                         //System. fileTime = new DateTime();
@@ -101,8 +104,8 @@ namespace CA.NET_Lab2
                         DirGen = new DirectoryInfo(TargetDirectory + currentArchive.Name.Substring(ifSpace, 4) + "\\" + currentArchive.Name.Substring(ifSpace + 5, 2) + "\\" + currentArchive.Name.Substring(ifSpace + 8, 2));
                         if (!DirGen.Exists)
                             DirGen.Create();
-                        File.Move(currentArchive.FullName, DirGen.FullName + "\\" + currentArchive.Name); //currentArchive.CopyTo(DirGen.FullName + "\\" + currentArchive.Name);
-                        File.Delete(currentArchive.FullName);
+                        //File.Move(currentArchive.FullName, DirGen.FullName + "\\" + currentArchive.Name); //currentArchive.CopyTo(DirGen.FullName + "\\" + currentArchive.Name);
+                        //File.Delete(currentArchive.FullName);
                     }
                 }
                 if ((currentArchive = new FileInfo(eFPath)).Extension == ".gz" && eFPath.IndexOf(TargetDirectory) != -1) //e.FullPath.Substring(e.FullPath.IndexOf(TargetDirectory),TargetDirectory.Length) == TargetDirectory
@@ -121,7 +124,7 @@ namespace CA.NET_Lab2
             try
             {
                 currentFile = fileToCompress;
-                using (FileStream originalFileStream = fileToCompress.OpenRead())
+                using (FileStream originalFileStream = fileToCompress.OpenRead())   // or new FileStream(fileToCompress.FullName, FileMode.OpenOrCreate))
                 {
                     if ((File.GetAttributes(fileToCompress.FullName) & FileAttributes.Hidden)
                         != FileAttributes.Hidden &
@@ -175,5 +178,36 @@ namespace CA.NET_Lab2
                 return fileToDecompress;
             }
         }
+        static FileInfo Encryption(FileInfo fileToEncryption)
+        {
+            byte[] key = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16 };
+            try
+            {
+                currentFile = fileToEncryption;
+                using (FileStream originalFileStream  = fileToEncryption.OpenRead())
+                {                     
+                    using (FileStream cryptedFileStream = File.Create(fileToEncryption.FullName.Replace(".txt", "_AES.txt")))
+                    {
+                        Aes aes = Aes.Create();
+                        aes.Key = key;
+                        byte[] iv = aes.IV;
+
+                        cryptedFileStream.Write(iv, 0, iv.Length);
+                        using (CryptoStream encryptionStream = new CryptoStream(cryptedFileStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                        {
+                            originalFileStream.CopyTo(encryptionStream);
+                        }
+                    }
+                    currentFile = new FileInfo(fileToEncryption.FullName.Replace(".txt", "_AES.txt"));
+                }
+                return currentFile;
+            }
+            catch(FileNotFoundException ex)
+            {
+                Console.WriteLine("Encryption error:" + ex.Message);
+                return fileToEncryption;
+            }
+        }
+
     }
 }
