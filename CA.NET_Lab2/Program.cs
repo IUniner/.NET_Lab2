@@ -83,8 +83,11 @@ namespace CA.NET_Lab2
         }
         static void changeWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            Console.WriteLine("File|> {0} changed at time: {1}", e.FullPath, DateTime.Now.ToLocalTime());
-            fileHandler(e.FullPath);
+            if (e.FullPath.IndexOf(".") != -1)
+            {
+                Console.WriteLine("File|> {0} changed at time: {1}", e.FullPath, DateTime.Now.ToLocalTime());
+                fileHandler(e.FullPath);
+            }
         }
         static void fileHandler(string eFPath)
         {
@@ -96,7 +99,10 @@ namespace CA.NET_Lab2
                     currentFile = Encryption(currentFile);
 
                     currentArchive = Compress(currentFile);
-                    if (currentArchive.FullName.IndexOf("_AES.gz") != -1)
+                    if(currentFile.Exists)
+                 //   File.Delete(currentFile.FullName);
+       
+                if (currentArchive.FullName.IndexOf("_AES.gz") != -1)
                     {
                         int ifSpace = currentArchive.Name.IndexOf("_") + 1;
                         //System. fileTime = new DateTime();
@@ -104,8 +110,23 @@ namespace CA.NET_Lab2
                         DirGen = new DirectoryInfo(TargetDirectory + currentArchive.Name.Substring(ifSpace, 4) + "\\" + currentArchive.Name.Substring(ifSpace + 5, 2) + "\\" + currentArchive.Name.Substring(ifSpace + 8, 2));
                         if (!DirGen.Exists)
                             DirGen.Create();
-                        //File.Move(currentArchive.FullName, DirGen.FullName + "\\" + currentArchive.Name); //currentArchive.CopyTo(DirGen.FullName + "\\" + currentArchive.Name);
-                        //File.Delete(currentArchive.FullName);
+                        if (!new FileInfo(DirGen.FullName + "\\" + currentArchive.Name).Exists)
+                        {
+                            File.Move(currentArchive.FullName, DirGen.FullName + "\\" + currentArchive.Name); //currentArchive.CopyTo(DirGen.FullName + "\\" + currentArchive.Name);
+                            File.Delete(DirGen.FullName.Replace(TargetDirectory, SourceDirectory) + "\\" + currentFile.Name.Replace(".gz",".txt"));
+                            }
+                        if (currentArchive.Exists)
+                        {
+                            //File.Delete(currentArchive.FullName);
+                        }
+                            if (new FileInfo(DirGen.FullName.Replace(TargetDirectory, SourceDirectory) + "\\" + currentFile.Name).Exists)
+                            {
+                                File.Delete(currentFile.FullName);
+                            }
+                        }
+
+                    if (currentFile.FullName.IndexOf("_AES.txt") != -1 && eFPath.IndexOf(SourceDirectory) != -1) //&& currentFile.FullName.IndexOf("_AES.gz") == -1)
+                    {  //File.Delete(currentFile.FullName);
                     }
                 }
                 if ((currentArchive = new FileInfo(eFPath)).Extension == ".gz" && eFPath.IndexOf(TargetDirectory) != -1) //e.FullPath.Substring(e.FullPath.IndexOf(TargetDirectory),TargetDirectory.Length) == TargetDirectory
