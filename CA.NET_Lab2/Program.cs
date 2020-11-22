@@ -1,25 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using System.Threading.Tasks;
 using System.IO.Compression;
-using System.Text;
 using System.Security.Cryptography;
 
 namespace CA.NET_Lab2
 {
     class Program
     {
-        //System.Console.InputEncoding = Encoding.GetEncoding(1251);
+        static readonly private byte[] key = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16 };
         static FileInfo currentFile = null;
         static FileInfo currentArchive = null;
-        static string SourceDirectory = "C:\\ClientData\\data\\";
-        static string TargetDirectory = "C:\\ServerData\\archive\\";
+        static readonly string SourceDirectory = "C:\\ClientData\\data\\";
+        static readonly string TargetDirectory = "C:\\ServerData\\archive\\";
         static DirectoryInfo DirGen = new DirectoryInfo("C:\\");
-        static void Main(string[] args)
+        static void Main()
         {
-
             //DirectoryInfo DirGen = new DirectoryInfo(path + "12\\");
             //FileSystemWatcher watcher = new FileSystemWatcher(path);
             using (FileSystemWatcher changeWatcher = new FileSystemWatcher(SourceDirectory))
@@ -29,37 +25,22 @@ namespace CA.NET_Lab2
                     changeWatcher,
                     new FileSystemWatcher(TargetDirectory)
                 };
-                //FileInfo selectFile = new FileInfo(e.FullPath)
                 watchers[0].EnableRaisingEvents = true;
                 watchers[0].IncludeSubdirectories = true;
                 watchers[1].EnableRaisingEvents = true;
                 watchers[1].IncludeSubdirectories = true;
 
                 watchers[0].Changed += changeWatcher_Changed;
-                watchers[0].Created += changeWatcher_Created;
-                watchers[0].Deleted += changeWatcher_Deleted;
-                watchers[0].Renamed += changeWatcher_Renamed;
-
                 watchers[1].Changed += changeWatcher_Changed;
+                watchers[0].Created += changeWatcher_Created;
                 watchers[1].Created += changeWatcher_Created;
+                watchers[0].Deleted += changeWatcher_Deleted;
                 watchers[1].Deleted += changeWatcher_Deleted;
+                watchers[0].Renamed += changeWatcher_Renamed;
                 watchers[1].Renamed += changeWatcher_Renamed;
 
                 Console.Read();
             }
-            /*using (FileSystemWatcher changeWatcher = new FileSystemWatcher(TargetDirectory))
-            {
-                //FileInfo selectFile = new FileInfo(e.FullPath)
-                changeWatcher.EnableRaisingEvents = true;
-                changeWatcher.IncludeSubdirectories = true;
-
-                changeWatcher.Changed += changeWatcher_Changed;
-                changeWatcher.Created += changeWatcher_Created;
-                changeWatcher.Deleted += changeWatcher_Deleted;
-                changeWatcher.Renamed += changeWatcher_Renamed;
-
-                Console.Read();
-            }*/
         }
         static void changeWatcher_Renamed(object sender, RenamedEventArgs e)
         {
@@ -93,16 +74,17 @@ namespace CA.NET_Lab2
         {
             try
             {
-                if ((currentFile = new FileInfo(eFPath)).Extension == ".txt" && eFPath.IndexOf(SourceDirectory) != -1)
+                if (eFPath.IndexOf(".txt") !=-1 && eFPath.IndexOf(SourceDirectory) != -1)
                 {
-                    if (currentFile.FullName.IndexOf("_AES.txt") == -1) //&& currentFile.FullName.IndexOf("_AES.gz") == -1)
-                    currentFile = Encryption(currentFile);
+                    currentFile = new FileInfo(eFPath);
+                    if (eFPath.IndexOf("AES.txt") == -1) //&& currentFile.FullName.IndexOf("_AES.gz") == -1)
+                        currentFile = Encryption(currentFile);
 
                     currentArchive = Compress(currentFile);
-                    if(currentFile.Exists)
-                 //   File.Delete(currentFile.FullName);
-       
-                if (currentArchive.FullName.IndexOf("_AES.gz") != -1)
+                    //if (currentFile.Exists)
+                    //   File.Delete(currentFile.FullName);
+
+                    if (currentArchive.FullName.IndexOf("AES.gz") > 0)
                     {
                         int ifSpace = currentArchive.Name.IndexOf("_") + 1;
                         //System. fileTime = new DateTime();
@@ -113,25 +95,28 @@ namespace CA.NET_Lab2
                         if (!new FileInfo(DirGen.FullName + "\\" + currentArchive.Name).Exists)
                         {
                             File.Move(currentArchive.FullName, DirGen.FullName + "\\" + currentArchive.Name); //currentArchive.CopyTo(DirGen.FullName + "\\" + currentArchive.Name);
-                            File.Delete(DirGen.FullName.Replace(TargetDirectory, SourceDirectory) + "\\" + currentFile.Name.Replace(".gz",".txt"));
-                            }
+                            //File.Delete(DirGen.FullName.Replace(TargetDirectory, SourceDirectory) + "\\" + currentFile.Name.Replace(".gz", ".txt"));
+                        }
                         if (currentArchive.Exists)
                         {
                             //File.Delete(currentArchive.FullName);
                         }
-                            if (new FileInfo(DirGen.FullName.Replace(TargetDirectory, SourceDirectory) + "\\" + currentFile.Name).Exists)
-                            {
-                                File.Delete(currentFile.FullName);
-                            }
+                        if (new FileInfo(DirGen.FullName.Replace(TargetDirectory, SourceDirectory) + "\\" + currentFile.Name).Exists)
+                        {
+                            File.Delete(currentFile.FullName);
                         }
-
-                    if (currentFile.FullName.IndexOf("_AES.txt") != -1 && eFPath.IndexOf(SourceDirectory) != -1) //&& currentFile.FullName.IndexOf("_AES.gz") == -1)
-                    {  //File.Delete(currentFile.FullName);
+                    }
+                    if (currentFile.FullName.IndexOf("AES.txt") > 0 && eFPath.IndexOf(SourceDirectory) != -1) //&& currentFile.FullName.IndexOf("_AES.gz") == -1)
+                    {
+                        //File.Delete(currentFile.FullName);
                     }
                 }
-                if ((currentArchive = new FileInfo(eFPath)).Extension == ".gz" && eFPath.IndexOf(TargetDirectory) != -1) //e.FullPath.Substring(e.FullPath.IndexOf(TargetDirectory),TargetDirectory.Length) == TargetDirectory
+
+                if (eFPath.IndexOf("AES.gz")>0 && eFPath.IndexOf(TargetDirectory) != -1) //e.FullPath.Substring(e.FullPath.IndexOf(TargetDirectory),TargetDirectory.Length) == TargetDirectory
                 {
-                    Decompress(new FileInfo(eFPath));
+                    //currentFile = Decompress(new FileInfo(eFPath));
+                    //Decryption(currentFile);
+                    Decryption(Decompress(new FileInfo(eFPath)));
                 }
             }
             catch (FileNotFoundException ex)
@@ -144,12 +129,12 @@ namespace CA.NET_Lab2
         {
             try
             {
-                currentFile = fileToCompress;
-                using (FileStream originalFileStream = fileToCompress.OpenRead())   // or new FileStream(fileToCompress.FullName, FileMode.OpenOrCreate))
+                currentArchive = fileToCompress;
+                if ((File.GetAttributes(fileToCompress.FullName) & FileAttributes.Hidden)
+                    != FileAttributes.Hidden &
+                   fileToCompress.Extension != ".gz")
                 {
-                    if ((File.GetAttributes(fileToCompress.FullName) & FileAttributes.Hidden)
-                        != FileAttributes.Hidden &
-                       fileToCompress.Extension != ".gz")
+                    using (FileStream originalFileStream = fileToCompress.OpenRead())   // or new FileStream(fileToCompress.FullName, FileMode.OpenOrCreate))
                     {
                         using (FileStream compressedFileStream = File.Create(fileToCompress.FullName.Replace(".txt", ".gz")))
                         {
@@ -158,15 +143,15 @@ namespace CA.NET_Lab2
                                 originalFileStream.CopyTo(compressionStream);
                             }
                         }
-                        currentFile = new FileInfo(fileToCompress.FullName.Replace(".txt", ".gz"));
                     }
-                    return currentFile;
-                }
+                    currentArchive = new FileInfo(fileToCompress.FullName.Replace(".txt", ".gz"));
+                }            
+                return currentArchive;
             }
             catch (FileNotFoundException ex)
             {
                 Console.WriteLine("Compress error:" + ex.Message);
-                return fileToCompress;
+                return currentArchive;
             }
         }
         static FileInfo Decompress(FileInfo fileToDecompress)
@@ -178,18 +163,16 @@ namespace CA.NET_Lab2
                 {
                     using (FileStream originalFileStream = fileToDecompress.OpenRead())
                     {
-                        //string currentFileName = fileToDecompress.FullName;
-                        //string newFileName = currentFileName.Remove(currentFileName.Length - fileToDecompress.Extension.Length);
                         using (FileStream decompressedFileStream = File.Create(fileToDecompress.FullName.Replace(".gz", ".txt")))
                         {
                             using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
                             {
                                 decompressionStream.CopyTo(decompressedFileStream);
                             }
-                        }
-                        currentArchive = new FileInfo(fileToDecompress.FullName.Replace(".gz", ".txt"));
-                        fileToDecompress.Delete();
+                        }                       
                     }
+                    currentArchive = new FileInfo(fileToDecompress.FullName.Replace(".gz", ".txt"));
+                    fileToDecompress.Delete();
                 }
                 return currentArchive;
             }
@@ -201,22 +184,24 @@ namespace CA.NET_Lab2
         }
         static FileInfo Encryption(FileInfo fileToEncryption)
         {
-            byte[] key = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16 };
             try
             {
                 currentFile = fileToEncryption;
-                using (FileStream originalFileStream  = fileToEncryption.OpenRead())
-                {                     
-                    using (FileStream cryptedFileStream = File.Create(fileToEncryption.FullName.Replace(".txt", "_AES.txt")))
+                if (fileToEncryption.Extension == ".txt")
+                {
+                    using (FileStream originalFileStream = fileToEncryption.OpenRead())
                     {
-                        Aes aes = Aes.Create();
-                        aes.Key = key;
-                        byte[] iv = aes.IV;
-
-                        cryptedFileStream.Write(iv, 0, iv.Length);
-                        using (CryptoStream encryptionStream = new CryptoStream(cryptedFileStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                        using (FileStream cryptedFileStream = File.Create(fileToEncryption.FullName.Replace(".txt", "_AES.txt")))
                         {
-                            originalFileStream.CopyTo(encryptionStream);
+                            Aes aes = Aes.Create();
+                            aes.Key = key;
+                            byte[] iv = aes.IV;
+
+                            cryptedFileStream.Write(iv, 0, iv.Length);
+                            using (CryptoStream encryptionStream = new CryptoStream(cryptedFileStream, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                            {
+                                originalFileStream.CopyTo(encryptionStream);
+                            }
                         }
                     }
                     currentFile = new FileInfo(fileToEncryption.FullName.Replace(".txt", "_AES.txt"));
@@ -229,6 +214,39 @@ namespace CA.NET_Lab2
                 return fileToEncryption;
             }
         }
+        static FileInfo Decryption(FileInfo fileToDecryption)
+        {
+            try
+            {
+                currentFile = fileToDecryption;
+                if (fileToDecryption.Name.IndexOf("AES.txt") >0)
+                {
+                    using (FileStream originalFileStream = fileToDecryption.OpenRead())
+                    {
+                        Aes aes = Aes.Create();
+                        byte[] iv = new byte[aes.IV.Length];
+
+                        originalFileStream.Read(iv, 0, iv.Length);
+                        using (FileStream decryptedFileStream = File.Create(fileToDecryption.FullName.Replace("_AES.txt", ".txt")))
+                        {
+                            using (CryptoStream decryptionFileStream = new CryptoStream(originalFileStream, aes.CreateDecryptor(key,iv), CryptoStreamMode.Read))
+                            {
+                                decryptionFileStream.CopyTo(decryptedFileStream);
+                            }
+                        }
+                    }
+                    currentFile = new FileInfo(fileToDecryption.FullName.Replace("_AES.txt", ".txt"));
+                    fileToDecryption.Delete();
+                }
+                return currentFile;
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.WriteLine("Decryption error:" + ex.Message);
+                return fileToDecryption;
+            }
+        }
 
     }
+
 }
